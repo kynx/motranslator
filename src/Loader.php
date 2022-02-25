@@ -196,12 +196,12 @@ class Loader
         return $localeNames;
     }
 
-    public static function setCache(CacheInterface $cache): void
+    public static function setCache(?CacheInterface $cache): void
     {
         self::$cache = $cache;
     }
 
-    public static function setKeyProviderFactory(KeyProviderFactoryInterface $keyProviderFactory): void
+    public static function setKeyProviderFactory(?KeyProviderFactoryInterface $keyProviderFactory): void
     {
         self::$keyProviderFactory = $keyProviderFactory;
     }

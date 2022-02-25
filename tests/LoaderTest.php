@@ -256,15 +256,19 @@ class LoaderTest extends TestCase
         Loader::setCache($cache);
         Loader::setKeyProviderFactory($keyProviderFactory);
         $loader = Loader::getInstance();
-        $loader->setlocale('cs');
+        $loader->setlocale('be');
         $loader->textdomain('phpmyadmin');
         $loader->bindtextdomain('phpmyadmin', __DIR__ . '/data/locale/');
 
         $translator = $loader->getTranslator();
         $actual = $translator->gettext('Type');
 
+        // reset statics
+        Loader::setCache(null);
+        Loader::setKeyProviderFactory(null);
+
         $this->assertSame(MockCache::TRANSLATION, $actual);
-        $this->assertSame('cs', $keyProviderFactory->locale);
+        $this->assertSame('be', $keyProviderFactory->locale);
         $this->assertSame('phpmyadmin', $keyProviderFactory->domain);
         $this->assertSame(MockKeyProvider::KEY, $cache->key);
     }
