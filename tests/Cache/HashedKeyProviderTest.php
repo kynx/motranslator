@@ -7,6 +7,8 @@ namespace PhpMyAdmin\MoTranslator\Tests\Cache;
 use PhpMyAdmin\MoTranslator\Cache\HashedKeyProvider;
 use PHPUnit\Framework\TestCase;
 
+use function md5;
+
 /**
  * @covers \PhpMyAdmin\MoTranslator\Cache\HashedKeyProvider
  */

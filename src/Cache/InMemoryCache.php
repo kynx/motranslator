@@ -11,13 +11,13 @@ use function array_key_exists;
 /**
  * Simplistic in-memory cache
  *
- * This does not honour PSR-16's requirements for TTL cache key characters. It is for internal use only.
+ * This does not honour PSR-16's requirements for TTL or invalid cache key characters. It is for internal use only.
  *
  * @internal
  */
 final class InMemoryCache implements CacheInterface
 {
-    /** @var array */
+    /** @var string[]  */
     private $items;
 
     public function __construct(?array $items = null)
@@ -39,6 +39,7 @@ final class InMemoryCache implements CacheInterface
     public function set($key, $value, $ttl = null): bool
     {
         $this->items[$key] = $value;
+
         return true;
     }
 
@@ -48,15 +49,14 @@ final class InMemoryCache implements CacheInterface
     public function delete($key): bool
     {
         unset($this->items[$key]);
+
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function clear(): bool
     {
         $this->items = [];
+
         return true;
     }
 
@@ -69,6 +69,7 @@ final class InMemoryCache implements CacheInterface
         foreach ($keys as $key) {
             $items[$key] = $this->get($key, $default);
         }
+
         return $items;
     }
 
@@ -80,6 +81,7 @@ final class InMemoryCache implements CacheInterface
         foreach ($values as $key => $value) {
             $this->set($key, $value, $ttl);
         }
+
         return true;
     }
 
@@ -91,6 +93,7 @@ final class InMemoryCache implements CacheInterface
         foreach ($keys as $key) {
             $this->delete($key);
         }
+
         return true;
     }
 

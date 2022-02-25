@@ -49,6 +49,7 @@ class Loader
 
     /**
      * Cache to use, or `null` for `InMemoryCache`
+     *
      * @static
      * @var CacheInterface|null
      */
@@ -56,6 +57,7 @@ class Loader
 
     /**
      * Cache key provider, or `null` for `NoopKeyProvider`
+     *
      * @var KeyProviderFactoryInterface|null
      */
     private static $keyProviderFactory = null;
@@ -247,11 +249,12 @@ class Loader
         return $this->domains[$this->locale][$domain];
     }
 
-    private function getKeyProvider($domain): ?KeyProviderInterface
+    private function getKeyProvider(string $domain): ?KeyProviderInterface
     {
         if (self::$keyProviderFactory instanceof KeyProviderFactoryInterface) {
             return self::$keyProviderFactory->getInstance($this->locale, $domain);
         }
+
         return null;
     }
 

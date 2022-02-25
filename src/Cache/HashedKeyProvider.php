@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpMyAdmin\MoTranslator\Cache;
 
+use function md5;
+
 final class HashedKeyProvider implements KeyProviderInterface
 {
     /** @var string */

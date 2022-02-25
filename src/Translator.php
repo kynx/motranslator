@@ -26,10 +26,8 @@ declare(strict_types=1);
 
 namespace PhpMyAdmin\MoTranslator;
 
-use PhpMyAdmin\MoTranslator\Cache\CacheKeyProviderInterface;
 use PhpMyAdmin\MoTranslator\Cache\InMemoryCache;
 use PhpMyAdmin\MoTranslator\Cache\KeyProviderInterface;
-use PhpMyAdmin\MoTranslator\Cache\NoopCacheKeyProvider;
 use PhpMyAdmin\MoTranslator\Cache\NoopKeyProvider;
 use PhpMyAdmin\MoTranslator\Exception\InvalidCacheException;
 use Psr\SimpleCache\CacheInterface;
@@ -118,8 +116,11 @@ class Translator
     /**
      * @param string|null $filename Name of mo file to load (null to not load a file)
      */
-    public function __construct(?string $filename, ?CacheInterface $cache = null, ?KeyProviderInterface $keyProvider = null)
-    {
+    public function __construct(
+        ?string $filename,
+        ?CacheInterface $cache = null,
+        ?KeyProviderInterface $keyProvider = null
+    ) {
         $this->cache = $cache ?? new InMemoryCache();
         $this->keyProvider = $keyProvider ?? new NoopKeyProvider();
 
@@ -438,6 +439,7 @@ class Translator
                 get_class($this->cache)
             ));
         }
+
         $this->cache->setAll($translations);
     }
 
@@ -454,6 +456,7 @@ class Translator
                 get_class($this->cache)
             ));
         }
+
         return $this->cache->getAll();
     }
 
