@@ -48,6 +48,10 @@ final class MockCache implements CacheInterface
     }
 
     /**
+     * @param string[] $keys
+     *
+     * @return string[]
+     *
      * @inheritDoc
      */
     public function getMultiple($keys, $default = null)
@@ -56,6 +60,8 @@ final class MockCache implements CacheInterface
     }
 
     /**
+     * @param string[] $values
+     *
      * @inheritDoc
      */
     public function setMultiple($values, $ttl = null)
@@ -64,6 +70,8 @@ final class MockCache implements CacheInterface
     }
 
     /**
+     * @param string[] $keys
+     *
      * @inheritDoc
      */
     public function deleteMultiple($keys)

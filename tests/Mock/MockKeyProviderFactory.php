@@ -19,6 +19,6 @@ final class MockKeyProviderFactory implements KeyProviderFactoryInterface
         $this->locale = $locale;
         $this->domain = $domain;
 
-        return new MockKeyProvider($locale, $domain);
+        return new MockKeyProvider();
     }
 }

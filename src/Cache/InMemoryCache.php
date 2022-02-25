@@ -20,6 +20,9 @@ final class InMemoryCache implements CacheInterface
     /** @var string[]  */
     private $items;
 
+    /**
+     * @param string[]|null $items
+     */
     public function __construct(?array $items = null)
     {
         $this->items = $items ?? [];
@@ -61,7 +64,10 @@ final class InMemoryCache implements CacheInterface
     }
 
     /**
-     * @inheritDoc
+     * @param string[]    $keys
+     * @param string|null $default
+     *
+     * @return string[]
      */
     public function getMultiple($keys, $default = null): array
     {
@@ -74,6 +80,8 @@ final class InMemoryCache implements CacheInterface
     }
 
     /**
+     * @param string[] $values
+     *
      * @inheritDoc
      */
     public function setMultiple($values, $ttl = null): bool
@@ -86,6 +94,8 @@ final class InMemoryCache implements CacheInterface
     }
 
     /**
+     * @param string[] $keys
+     *
      * @inheritDoc
      */
     public function deleteMultiple($keys): bool
@@ -107,6 +117,8 @@ final class InMemoryCache implements CacheInterface
 
     /**
      * Returns all items from cache
+     *
+     * @return string[]
      */
     public function getAll(): array
     {
@@ -115,6 +127,8 @@ final class InMemoryCache implements CacheInterface
 
     /**
      * Warms cache with given items
+     *
+     * @param string[] $items
      */
     public function setAll(array $items): void
     {
