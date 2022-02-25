@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpMyAdmin\MoTranslator\Tests;
 
+use PhpMyAdmin\MoTranslator\Tests\Mock\MockCache;
+use PhpMyAdmin\MoTranslator\Tests\Mock\MockKeyProvider;
 use PhpMyAdmin\MoTranslator\Translator;
 use PHPUnit\Framework\TestCase;
 
@@ -58,5 +60,17 @@ class TranslatorTest extends TestCase
         $translator->setTranslations($transTable);
         $this->assertSame($transTable, $translator->getTranslations());
         $this->assertEquals('it depends', $translator->gettext('is it hard'));
+    }
+
+    public function testUsesCustomCacheAndKeyProvider(): void
+    {
+        $cache = new MockCache();
+        $keyProvider = new MockKeyProvider();
+
+        $translator = new Translator('', $cache, $keyProvider);
+        $actual = $translator->gettext('foo');
+
+        $this->assertSame(MockCache::TRANSLATION, $actual);
+        $this->assertSame(MockKeyProvider::KEY, $cache->key);
     }
 }

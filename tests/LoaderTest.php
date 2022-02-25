@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace PhpMyAdmin\MoTranslator\Tests;
 
 use PhpMyAdmin\MoTranslator\Loader;
+use PhpMyAdmin\MoTranslator\Tests\Mock\MockCache;
+use PhpMyAdmin\MoTranslator\Tests\Mock\MockKeyProvider;
+use PhpMyAdmin\MoTranslator\Tests\Mock\MockKeyProviderFactory;
 use PHPUnit\Framework\TestCase;
 
 use function getenv;
@@ -243,6 +246,27 @@ class LoaderTest extends TestCase
             'Тып',
             $translator->gettext('Type')
         );
+    }
+
+    public function testGetInstanceUsesCustomCacheAndKey(): void
+    {
+        $cache = new MockCache();
+        $keyProviderFactory = new MockKeyProviderFactory();
+
+        Loader::setCache($cache);
+        Loader::setKeyProviderFactory($keyProviderFactory);
+        $loader = Loader::getInstance();
+        $loader->setlocale('cs');
+        $loader->textdomain('phpmyadmin');
+        $loader->bindtextdomain('phpmyadmin', __DIR__ . '/data/locale/');
+
+        $translator = $loader->getTranslator();
+        $actual = $translator->gettext('Type');
+
+        $this->assertSame(MockCache::TRANSLATION, $actual);
+        $this->assertSame('cs', $keyProviderFactory->locale);
+        $this->assertSame('phpmyadmin', $keyProviderFactory->domain);
+        $this->assertSame(MockKeyProvider::KEY, $cache->key);
     }
 
     public function testDetect(): void

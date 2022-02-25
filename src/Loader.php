@@ -26,6 +26,10 @@ declare(strict_types=1);
 
 namespace PhpMyAdmin\MoTranslator;
 
+use PhpMyAdmin\MoTranslator\Cache\KeyProviderFactoryInterface;
+use PhpMyAdmin\MoTranslator\Cache\KeyProviderInterface;
+use Psr\SimpleCache\CacheInterface;
+
 use function array_push;
 use function file_exists;
 use function getenv;
@@ -42,6 +46,19 @@ class Loader
      * @var Loader
      */
     private static $instance;
+
+    /**
+     * Cache to use, or `null` for `InMemoryCache`
+     * @static
+     * @var CacheInterface|null
+     */
+    private static $cache = null;
+
+    /**
+     * Cache key provider, or `null` for `NoopKeyProvider`
+     * @var KeyProviderFactoryInterface|null
+     */
+    private static $keyProviderFactory = null;
 
     /**
      * Default gettext domain to use.
@@ -179,6 +196,16 @@ class Loader
         return $localeNames;
     }
 
+    public static function setCache(CacheInterface $cache): void
+    {
+        self::$cache = $cache;
+    }
+
+    public static function setKeyProviderFactory(KeyProviderFactoryInterface $keyProviderFactory): void
+    {
+        self::$keyProviderFactory = $keyProviderFactory;
+    }
+
     /**
      * Returns Translator object for domain or for default domain.
      *
@@ -213,10 +240,19 @@ class Loader
 
             // We don't care about invalid path, we will get fallback
             // translator here
-            $this->domains[$this->locale][$domain] = new Translator($filename);
+            $keyProvider = $this->getKeyProvider($domain);
+            $this->domains[$this->locale][$domain] = new Translator($filename, self::$cache, $keyProvider);
         }
 
         return $this->domains[$this->locale][$domain];
+    }
+
+    private function getKeyProvider($domain): ?KeyProviderInterface
+    {
+        if (self::$keyProviderFactory instanceof KeyProviderFactoryInterface) {
+            return self::$keyProviderFactory->getInstance($this->locale, $domain);
+        }
+        return null;
     }
 
     /**

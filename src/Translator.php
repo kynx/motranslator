@@ -26,19 +26,27 @@ declare(strict_types=1);
 
 namespace PhpMyAdmin\MoTranslator;
 
+use PhpMyAdmin\MoTranslator\Cache\CacheKeyProviderInterface;
+use PhpMyAdmin\MoTranslator\Cache\InMemoryCache;
+use PhpMyAdmin\MoTranslator\Cache\KeyProviderInterface;
+use PhpMyAdmin\MoTranslator\Cache\NoopCacheKeyProvider;
+use PhpMyAdmin\MoTranslator\Cache\NoopKeyProvider;
+use PhpMyAdmin\MoTranslator\Exception\InvalidCacheException;
+use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Throwable;
 
-use function array_key_exists;
 use function chr;
 use function count;
 use function explode;
+use function get_class;
 use function implode;
 use function intval;
 use function is_readable;
 use function ltrim;
 use function preg_replace;
 use function rtrim;
+use function sprintf;
 use function strcmp;
 use function stripos;
 use function strpos;
@@ -101,18 +109,20 @@ class Translator
     /** @var int|null number of plurals */
     private $pluralCount = null;
 
-    /**
-     * Array with original -> translation mapping.
-     *
-     * @var array<string,string>
-     */
-    private $cacheTranslations = [];
+    /** @var CacheInterface */
+    private $cache;
+
+    /** @var KeyProviderInterface */
+    private $keyProvider;
 
     /**
      * @param string|null $filename Name of mo file to load (null to not load a file)
      */
-    public function __construct(?string $filename)
+    public function __construct(?string $filename, ?CacheInterface $cache = null, ?KeyProviderInterface $keyProvider = null)
     {
+        $this->cache = $cache ?? new InMemoryCache();
+        $this->keyProvider = $keyProvider ?? new NoopKeyProvider();
+
         // The user can load the translations manually
         if ($filename === null) {
             return;
@@ -165,7 +175,7 @@ class Translator
                 $iPlusTwo = $iTimesTwo + 2;
                 $original = $stream->read($tableOriginals[$iPlusTwo], $tableOriginals[$iPlusOne]);
                 $translation = $stream->read($tableTranslations[$iPlusTwo], $tableTranslations[$iPlusOne]);
-                $this->cacheTranslations[$original] = $translation;
+                $this->cache->set($this->getKey($original), $translation);
             }
         } catch (ReaderException $e) {
             $this->error = self::ERROR_READING;
@@ -183,11 +193,7 @@ class Translator
      */
     public function gettext(string $msgid): string
     {
-        if (array_key_exists($msgid, $this->cacheTranslations)) {
-            return $this->cacheTranslations[$msgid];
-        }
-
-        return $msgid;
+        return $this->cache->get($this->getKey($msgid), $msgid);
     }
 
     /**
@@ -197,7 +203,7 @@ class Translator
      */
     public function exists(string $msgid): bool
     {
-        return array_key_exists($msgid, $this->cacheTranslations);
+        return $this->cache->has($this->getKey($msgid));
     }
 
     /**
@@ -290,11 +296,7 @@ class Translator
 
         // cache header field for plural forms
         if ($this->pluralEquation === null) {
-            if (isset($this->cacheTranslations[''])) {
-                $header = $this->cacheTranslations[''];
-            } else {
-                $header = '';
-            }
+            $header = $this->cache->get($this->getKey(''), '');
 
             $expr = $this->extractPluralsForms($header);
             $this->pluralEquation = $this->sanitizePluralExpression($expr);
@@ -346,14 +348,15 @@ class Translator
     {
         // this should contains all strings separated by NULLs
         $key = implode(chr(0), [$msgid, $msgidPlural]);
-        if (! array_key_exists($key, $this->cacheTranslations)) {
+        $result = $this->cache->get($this->getKey($key));
+        if ($result === null) {
             return $number !== 1 ? $msgidPlural : $msgid;
         }
 
         // find out the appropriate form
         $select = $this->selectString($number);
 
-        $result = $this->cacheTranslations[$key];
+        $result = $this->cache->get($this->getKey($key), '');
         $list = explode(chr(0), $result);
         // @codeCoverageIgnoreStart
         if ($list === false) {
@@ -419,7 +422,7 @@ class Translator
      */
     public function setTranslation(string $msgid, string $msgstr): void
     {
-        $this->cacheTranslations[$msgid] = $msgstr;
+        $this->cache->set($this->getKey($msgid), $msgstr);
     }
 
     /**
@@ -429,7 +432,13 @@ class Translator
      */
     public function setTranslations(array $translations): void
     {
-        $this->cacheTranslations = $translations;
+        if (! $this->cache instanceof InMemoryCache) {
+            throw new InvalidCacheException(sprintf(
+                "'%s' does not support setting translations",
+                get_class($this->cache)
+            ));
+        }
+        $this->cache->setAll($translations);
     }
 
     /**
@@ -439,6 +448,17 @@ class Translator
      */
     public function getTranslations(): array
     {
-        return $this->cacheTranslations;
+        if (! $this->cache instanceof InMemoryCache) {
+            throw new InvalidCacheException(sprintf(
+                "'%s' does not support setting translations",
+                get_class($this->cache)
+            ));
+        }
+        return $this->cache->getAll();
+    }
+
+    private function getKey(string $msgid): string
+    {
+        return $this->keyProvider->getKey($msgid);
     }
 }
